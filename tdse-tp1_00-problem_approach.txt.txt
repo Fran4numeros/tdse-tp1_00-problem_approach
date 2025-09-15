@@ -1,0 +1,90 @@
+ACTIVIDAD 01
+
+Padrón: 110058 Apellido y Nombre: Francisco Javier Briones Grupo: 2 Curso N°: 3 
+
+ACTIVIDAD 02
+Descripción de requerimiento:
+	
+Si el auto se encuentra dentro del Loop Detector, al presionar Wireless Remote Computer lo procesará, y se accionará la apertura de 
+Barrier. Cuando el IR Photo Cell deja de detectar el auto, el sistema baja Barrier. 
+Los diferentes modelos de sensor, system y actuator se encargarán de dejar aisladas las tareas una de la otra de forma pertinente,
+tal que no tenga que system verificar que un sensor haya detectado correctamente o si el pulso fue espurio, como también que el parpadeo de un 
+led quede aislado de system.	
+
+Suposición: El loop detector puede detectar sólo automóviles y se supone que no pueden interrumpir la detección animales u otros diferentes a lo
+esperado.
+Suposición: El sensor infrarrojo esta a altura suficiente. (un poco mayor a la de una rueda promedio)
+Suposición: El sistema se podrá encargar de que un auto haya llegado lo suficientemente cerca como para que el Loop Detector lo haya detectado
+y que el usuario se haya arrepentido, tal que se haya ido marcha atras.
+Suposición: El sistema también podrá administrar que el sensor infrarrojo haya dejado de detectar el auto por haber terminado de pasar, y que 
+luego vuelva a ser detectado por el mismo sensor, tal que la barrera tenga que volver a cambiar su estado a estar subiendo para no dañar el auto.
+Suposición: Se supone que el tiempo de subida y de bajada de la barrera es el mismo
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+ACTIVIDAD 03
+
+Escrutar: Habrá que continuamente estar verificando que las diferentes entradas no estén enviando señales al ser accionadas. Cuando efectivamente 
+alguna entrada haya enviado una señal, el modelo de sensor ejecutará un proceso antirrebote tal que no haya sido esta activación efectuada por 
+un pulso espurio, ya sea por la transisción de estados o bien por un glitch. (tiempo estimado para corroborar si efectivamente el cambio de estados
+fue realizado por el usuario será entre 20ms y 40ms)
+
+Procesar: Se iniciará timer cuando se haga un cambio desde que Wireless Remote y loop detector hayan sido detectados a la vez, tal que se le asignará
+un máximo valor al contador tick_bajando o tick_subiendo, según de que estado provenga, siendo este tiempo el de subida o bajada de la barrera 
+respectivamente.
+También, system resuelve que haya bajado una cantidad de tiempo menor que la máxima y que sea interrumpido por una marcha atrás del auto, así 
+detectando el sensor infrarrojo y, en conscuencia, la barrera subirá la diferencia de tiempo entre la máxima y la que ya haya bajado. Viceversa
+también estará resuelto.
+
+Actuar: Un led podrá emular el funcionamento de la barrera como actuador, tal que se puedan emular sus estados de barrera completamente abierta como
+led prendido, o la barrera completamente cerrada como el led apagado. Los estados de transición podrán ser representados con el parpadeo del led, 
+tal que titile a una frecuencia dada para la subida y a otra diferente para la bajada.
+----------------------------------------------------------------------------------------------------------------------------------------------------
+ACTIVIDAD 04
+
+Modelo Sensor: 
+
+event => EV_BTN_00_BUTTON_HOVER          => Evento que confirma que el botón efectivamente no está siendo presionado.
+event => EV_BTN_00_BUTTON_PRESSED        => Evento que confirma que el botón efectivamente está siendo presionado.
+ 
+action => tick = DEL_BTN_00_MAX          => Carga un contador/temporizador (tick) con un valor máximo definido DEL_BTN_00_MAX.
+action => raise EV_SYS_00_HOVER          => Dispara el evento interno que confirma que el botón efectivamente no está siendo presionado.
+action => raise EV_SYS_00_PRESSED        => Dispara el evento interno que confirma que el botón efectivamente está siendo presionado.
+action => tick -- 	                 => Decrementa contador tick relativo a que transcurra el tiempo para comenzar a considerar el estado
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+ACTIVIDAD 06
+
+Modelo System:
+
+event => EV_SYS_00_IR_PHOTO_CELL_ON      => Evento que representa que el sensor infrarojo está detectando. 
+event => EV_SYS_00_IR_PHOTO_CELL_OFF     => Evento que representa que el sensor infrarojo no está detectando. 
+event => EV_SYS_00_LOOP_DETECTOR_ON      => Evento que representa que el sensor loop detector está detectando. 
+event => EV_SYS_00_LOOP_DETECTOR_OFF     => Evento que representa que el sensor loop detector no está detectando. 
+event => EV_SYS_00_WIRELESS_REMOTE_ON    => Evento que representa que el wireless remote se encuentra en estado == 1.
+event => EV_SYS_00_WIRELESS_REMOTE_OFF   => Evento que representa que el wireless remote se encuentra en estado == 0.
+
+action => tick_accion = DEL_SYS_00_MAX   => Carga un contador/temporizador (tick) con un valor máximo definido DEL_SYS_00_MAX.
+action => remote = DEL_SYS_00_ALTA       => Carga una variable con un valor == 1
+action => remote = DEL_SYS_00_BAJA       => Carga una variable con un valor == 0
+action => raise EV_ACT_00_LED_ON         => Dispara un evento interno relativo a que la barrera esté completamente alta.
+action => raise EV_ACT_00_LED_OFF        => Dispara un evento interno relativo a que la barrera esté completamente baja.
+action => raise EV_ACT_00_BLINK_TURN_ON  => Dispara un evento interno relativo a que la barrera esté subiendo.
+action => raise EV_ACT_00_BLINK_TURN_OFF => Dispara un evento interno relativo a que la barrera esté bajando.
+action => tick_bajando --                => Decrementa contador tick_bajando relativo a que la barrera esté bajando.
+action => tick_subiendo --               => Decrementa contador tick_subiendo relativo a que la barrera esté subiendo.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+ACTIVIDAD 08
+
+Modelo Actuator:
+
+event => EV_ACT_00_LED_ON                => Evento que representa que la barrera está completamente alta.
+event => EV_ACT_00_LED_OFF               => Evento que representa que la barrera está completamente baja.
+event => EV_ACT_00_BLINK_TURN_ON         => Evento que representa que la barrera está subiendo.
+event => EV_ACT_00_BLINK_TURN_OFF        => Evento que representa que la barrera está bajando.
+
+action => tick_subiendo = DEL_ACT_00_MAX => Carga un contador/temporizador (tick) con un valor máximo definido DEL_ACT_00_MAX.
+action => tick_bajando = DEL_ACT_00_MAX  => Carga un contador/temporizador (tick) con un valor máximo definido DEL_ACT_00_MAX.
+action => tick_subiendo--	         => Decrementa contador tick_subiendo relativo a que la barrera esté subiendo.	
+action => tick_bajando--	         => Decrementa contador tick_bajando relativo a que la barrera esté bajando.
+
